@@ -1,0 +1,15 @@
+<h1>Questions</h1>
+<input type='text' class='form-control' placeholder='search questions' ng-model="filter_question">
+<table border="1">
+      <tr>
+        <th>Question</th>
+        <th>Answers</th>
+        <th>Action</th>
+      </tr>
+      <tr ng-repeat="question in questions | filter:filter_question | orderBy: -1 * 'question.created'">
+        <td><span ng-bind="question.content"></span></td>
+        <td>{{question.answers.length}}</td>
+        <td><a href="#/question/{{question._id}}">Show</a> <a href="#/new_answer/{{question._id}}">Answer</a></td>
+      </tr>
+    </table>
+    <a href="#/default">Home</a>

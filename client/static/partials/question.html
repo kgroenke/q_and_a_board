@@ -1,0 +1,11 @@
+<h1>{{question.content}}</h1>
+
+<ul ng-repeat="answer in question.answers">
+  <li>User: {{answer.user}}</li>
+  <li>Answer: {{answer.content}}</li>
+  <li>Details: {{answer.details}}</li>
+  <li>Likes: {{answer.likes}}</li>
+  <li><form>
+    <input type='submit' value="Like!" ng-click='addLike(answer._id)'>
+  </form></li>
+</ul>

@@ -1,0 +1,8 @@
+<h1>New Answer</h1>
+<h2>{{question.content}}</h2>
+<p><span ng-bind="errors.content.message"></span></p>
+<form>
+  Your Answer: <input type="textarea" ng-model='newAnswer.content'></br>
+  Supporting Details: <input type="textarea" ng-model='newAnswer.details'></br>
+  <input type="submit" value="Submit" ng-click='addAnswer()'>
+</form>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html ng-app='myApp'>
+<head>
+  <link rel="stylesheet" href="/stylesheet/styles.css" type="text/css">
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.15/angular-ui-router.min.js"></script>
+  <script type = "text/javascript">
+
+  var myApp = angular.module('myApp', ['ui.router'])
+
+  name = ''
+  while(name=='' || !name){
+    var name = prompt('Enter your Name')
+  }
+
+  myApp.config(function($stateProvider){
+    $stateProvider
+
+    .state('home', {
+      url:'',
+      templateUrl: 'partials/default.html',
+      controller: 'questionsController'
+    })
+    .state('default', {
+      url: '/default',
+      templateUrl: 'partials/default.html',
+      controller: 'questionsController'
+    })
+    .state('new_question',{
+      url: '/new_question',
+      templateUrl: 'partials/new_question.html',
+      controller: 'questionsController'
+    })
+    .state('new_answer',{
+      url: '/new_answer/:id',
+      templateUrl: 'partials/new_answer.html',
+      controller: 'answersController'
+    })
+    .state('question',{
+      url: '/question/:id',
+      templateUrl: 'partials/question.html',
+      controller: 'questionsController'
+    })
+  })
+  myApp.factory('questionsFactory', function($http){
+    var questions = []
+    var factory = {}
+    factory.getQuestions = function(callback){
+      $http.get('/questions').success(function(output){
+        questions = output
+        callback(questions)
+      })
+    }
+    factory.getQuestion = function(info, callback){
+      var questionId = {}
+      questionId.id = info
+      $http.post('/question', questionId).success(function(output){
+        question = output
+        callback(question)
+      })
+    }
+    factory.createAuthor = function(data, callback){
+      author = data;
+      callback(author)
+    }
+    factory.addQuestion = function(info, callback){
+      info.author = name
+      $http.post('/question/add', info).success(function(output){
+        if(output.errors){
+          if(output.errors.name){
+            var problems = output.errors.name.message
+            callback(problems)
+          }
+          else{
+            var problems = output.errors
+            callback(problems)
+          }
+        }
+        else{
+          callback();
+        }
+      })
+    }
+
+    return factory
+  });
+  //answers factory
+  myApp.factory('answersFactory', function($http){
+    var factory = {};
+    factory.addAnswer = function(info, callback){
+      info.user = name
+      $http.post('/answer/add', info).success(function(output){
+        if(output.errors){
+          console.log("error add answer output", output.errors)
+          var problems = output.errors
+          callback(problems)
+        }
+        else{
+          callback()
+        }
+      })
+    }
+    factory.addLike = function(id, callback){
+      console.log("add like factory", id)
+      info = {}
+      info.id = id
+
+      $http.post('/answer/like', info).success(function(output){
+        if(output.errors){
+          console.log("error add like output", output.errors)
+        }
+        else{
+          callback()
+        }
+      })
+    }
+    return factory
+  })
+  // questions controller
+  myApp.controller('questionsController', function($scope, questionsFactory, $stateParams, answersFactory, $state){
+    $scope.questions = [];
+    var userId = $stateParams.id;
+    questionsFactory.getQuestion(userId, function(data){
+      $scope.question = data
+      $scope.answer = data.answers
+    })
+    questionsFactory.getQuestions(function(data){
+      $scope.questions = data
+    })
+
+    $scope.addQuestion = function(){
+      $scope.errors = ""
+      questionsFactory.addQuestion($scope.newQuestion, function(errors){
+        if(errors){
+          console.log("found an error!")
+          $scope.errors = errors;
+        }
+        else{
+          console.log("successfully added a question")
+        }
+      })
+      // $scope.newQuestion = {}
+      $state.transitionTo('default');
+    }
+    $scope.addLike = function(id){
+      answersFactory.addLike(id, function(errors){
+        if(errors){
+          console.log("found an error")
+          $scope.errors = errors
+        }
+        else{
+          console.log("successfully added a like!")
+          questionsFactory.getQuestion(userId, function(data){
+            $scope.question = data
+            $scope.answer = data.answers
+          })
+        }
+      })
+    }
+  })
+  //answers controller
+  myApp.controller('answersController', function($scope, answersFactory, $stateParams, questionsFactory, $state){
+    $scope.answers = [];
+
+    var userId = $stateParams.id;
+
+    questionsFactory.getQuestion(userId, function(data){
+      $scope.question = data
+      $scope.answer = data.answers
+    })
+    $scope.addAnswer = function(){
+      console.log("params", userId)
+
+      $scope.newAnswer._question = userId
+      console.log("add answer func", $scope.newAnswer)
+      answersFactory.addAnswer($scope.newAnswer, function(errors){
+        console.log("back at add order function in controller")
+        if(errors){
+          $scope.errors = errors;
+        }
+        else{
+          console.log("successfully added an answer")
+        }
+      })
+      $state.transitionTo('question', $stateParams);
+    }
+  })
+  </script>
+</head>
+<body>
+  <a href="#/default">Home</a>
+  <a href="#/new_question">Add Question</a>
+  <div ui-view>
+  </div>
+</body>
+</html>
